@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超大型狗狗數字時鐘</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts for Clock Styles -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@300;500;700;900&family=Montserrat:wght@200;400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <style>
+        /* Font Family Definitions */
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+        .font-montserrat { font-family: 'Montserrat', sans-serif; }
+        .font-tech { font-family: 'Share Tech Mono', monospace; }
+
+        /* Smooth background fade transition */
+        .bg-layer {
+            transition: opacity 1.5s ease-in-out;
+            will-change: opacity;
+        }
+
+        /* Clock Text Glow and Shadow Effect */
+        .clock-glow {
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.7), 0 0 40px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.8);
+        }
+
+        .text-glow-subtle {
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Glassmorphism background panel */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Hide scrollbars */
+        body {
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Progress ring animation */
+        .progress-bar-fill {
+            transition: width 1s linear;
+        }
+    </style>
+</head>
+<body class="h-full w-full bg-slate-950 text-white font-inter relative overflow-hidden">
+
+    <!-- Dual Background Layers for Seamless Crossfading -->
+    <div id="bg-layer-1" class="bg-layer absolute inset-0 bg-cover bg-center bg-no-repeat opacity-100 z-0"></div>
+    <div id="bg-layer-2" class="bg-layer absolute inset-0 bg-cover bg-center bg-no-repeat opacity-0 z-0"></div>
+
+    <!-- Gradient Vignette Overlay to ensure text legibility -->
+    <div id="dim-overlay" class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60 z-10 transition-opacity duration-300"></div>
+
+    <div class="relative z-20 h-full w-full flex flex-col justify-between p-6 md:p-10">
+
+        <!-- Top Header Controls -->
+        <header class="flex justify-between items-center w-full">
+            <!-- Brand / Logo Badge -->
+            <div class="flex items-center space-x-3 glass-panel px-4 py-2 rounded-full shadow-lg">
+                <i class="fa-solid fa-paw text-amber-400 text-lg"></i>
+                <span class="text-xs md:text-sm font-medium tracking-wider text-slate-200">萌寵狗狗時鐘 Cute Dog Clock</span>
+            </div>
+
+            <!-- Action Tools -->
+            <div class="flex items-center space-x-3">
+                <!-- Auto change status badge -->
+                <div class="hidden sm:flex items-center space-x-2 glass-panel px-3 py-1.5 rounded-full text-xs text-slate-300">
+                    <span id="sync-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="timer-text">一分鐘輪播中</span>
+                </div>
+
+                <!-- Settings Button -->
+                <button id="btn-settings" title="設置" class="glass-panel p-3 rounded-full hover:bg-white/20 transition duration-200 active:scale-95 focus:outline-none">
+                    <i class="fa-solid fa-sliders text-base text-white"></i>
+                </button>
+
+                <!-- Fullscreen Toggle -->
+                <button id="btn-fullscreen" title="全螢幕切換" class="glass-panel p-3 rounded-full hover:bg-white/20 transition duration-200 active:scale-95 focus:outline-none">
+                    <i class="fa-solid fa-expand text-base text-white"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Center Main Clock Display -->
+        <main class="flex-1 flex flex-col items-center justify-center text-center my-auto">
+            <!-- Giant Clock Numbers -->
+            <div id="clock-container" class="cursor-pointer">
+                <h1 id="clock-display" class="font-orbitron font-bold tracking-tight text-white clock-glow leading-none transition-all duration-300 select-none text-7xl sm:text-8xl md:text-9xl lg:text-[13rem] xl:text-[16rem]">
+                    00:00:00
+                </h1>
+            </div>
+
+            <!-- Date and Day Display -->
+            <div id="date-display" class="mt-4 md:mt-8 text-lg sm:text-2xl md:text-3xl font-light tracking-widest text-slate-100 text-glow-subtle flex items-center justify-center space-x-3">
+                <span id="date-text">2026 年 8 月 10 日</span>
+                <span class="opacity-40">•</span>
+                <span id="day-text" class="font-medium text-amber-300">星期一</span>
+            </div>
+        </main>
+
+        <!-- Bottom Controls & Photo Info -->
+        <footer class="w-full flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
+            <!-- Photo Info & Photographer Attribution -->
+            <div id="photo-info-panel" class="glass-panel px-4 py-2.5 rounded-2xl max-w-md w-full md:w-auto flex items-center space-x-3">
+                <i class="fa-solid fa-dog text-amber-400 text-lg flex-shrink-0"></i>
+                <div class="overflow-hidden">
+                    <p id="photo-location" class="text-xs sm:text-sm font-semibold text-white truncate">載入狗狗寫真中...</p>
+                    <p id="photo-author" class="text-[11px] sm:text-xs text-slate-300 truncate">攝影師: --</p>
+                </div>
+            </div>
+
+            <!-- Controls and Progress Bar -->
+            <div class="flex flex-col items-end w-full md:w-auto space-y-2">
+                <div class="flex items-center space-x-2">
+                    <!-- Manual Previous Photo -->
+                    <button id="btn-prev-photo" title="上一張照片" class="glass-panel p-2.5 rounded-full hover:bg-white/20 transition active:scale-90">
+                        <i class="fa-solid fa-chevron-left text-xs"></i>
+                    </button>
+                    <!-- Play/Pause Toggle -->
+                    <button id="btn-pause-photo" title="暫停/繼續自動換圖" class="glass-panel p-2.5 rounded-full hover:bg-white/20 transition active:scale-90">
+                        <i id="pause-icon" class="fa-solid fa-pause text-xs"></i>
+                    </button>
+                    <!-- Manual Next Photo -->
+                    <button id="btn-next-photo" title="下一張照片" class="glass-panel p-2.5 rounded-full hover:bg-white/20 transition active:scale-90">
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- Minute Countdown Progress Bar -->
+                <div class="w-full md:w-48 bg-black/40 h-1.5 rounded-full overflow-hidden border border-white/10">
+                    <div id="progress-bar" class="bg-gradient-to-r from-amber-400 to-rose-500 h-full w-0 progress-bar-fill"></div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 p-4">
+        <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-md w-full text-slate-100 shadow-2xl border border-white/20 transform scale-95 transition-transform duration-300" id="settings-card">
+            
+            <div class="flex justify-between items-center pb-4 mb-6 border-b border-white/10">
+                <h3 class="text-xl font-bold flex items-center space-x-2">
+                    <i class="fa-solid fa-paw text-amber-400"></i>
+                    <span>時鐘與狗狗桌布設置</span>
+                </h3>
+                <button id="btn-close-settings" class="text-slate-400 hover:text-white text-xl p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-5 text-sm">
+                <!-- Time Format (12/24 Hour) -->
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="font-medium">24 小時制</p>
+                        <p class="text-xs text-slate-400">切換 12 小時 (AM/PM) 或 24 小時格式</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-24h" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                    </label>
+                </div>
+
+                <!-- Show Seconds -->
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="font-medium">顯示秒數</p>
+                        <p class="text-xs text-slate-400">即時顯示每一秒跳動</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-seconds" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                    </label>
+                </div>
+
+                <!-- Show Date -->
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="font-medium">顯示日期</p>
+                        <p class="text-xs text-slate-400">在時鐘下方顯示年月日與星期</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-date" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                    </label>
+                </div>
+
+                <!-- Font Style Selection -->
+                <div class="space-y-1.5">
+                    <label class="font-medium block">時鐘字體風格</label>
+                    <select id="select-font" class="w-full bg-slate-900/80 border border-white/20 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-400">
+                        <option value="font-orbitron">Cyber Tech (Orbitron)</option>
+                        <option value="font-inter">Modern Minimal (Inter)</option>
+                        <option value="font-montserrat">Bold Clean (Montserrat)</option>
+                        <option value="font-tech">Digital Terminal (Share Tech)</option>
+                    </select>
+                </div>
+
+                <!-- Overlay Darkness Slider -->
+                <div class="space-y-1.5">
+                    <div class="flex justify-between">
+                        <label class="font-medium">背景遮罩暗度</label>
+                        <span id="darkness-value" class="text-xs text-amber-400">40%</span>
+                    </div>
+                    <input type="range" id="slider-darkness" min="10" max="80" value="40" class="w-full accent-amber-400 cursor-pointer">
+                </div>
+
+                <!-- Change Frequency -->
+                <div class="space-y-1.5">
+                    <label class="font-medium block">換圖頻率</label>
+                    <select id="select-interval" class="w-full bg-slate-900/80 border border-white/20 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-400">
+                        <option value="60">每 1 分鐘（預設）</option>
+                        <option value="30">每 30 秒</option>
+                        <option value="120">每 2 分鐘</option>
+                        <option value="300">每 5 分鐘</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Close Action Button -->
+            <div class="mt-8">
+                <button id="btn-save-settings" class="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold rounded-xl shadow-lg transition transform active:scale-95">
+                    完成設置
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // High Quality Curated Dog Landscape & Cute Photography Database
+        const landscapePhotos = [
+            {
+                url: "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=2000&q=85",
+                location: "陽光草原上的黃金獵犬 (Golden Retriever)",
+                author: "Marliese Streefland"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=2000&q=85",
+                location: "微笑活潑的日系柴犬 (Shiba Inu)",
+                author: "Marek Shtshna"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1612536057832-2ff7ead58194?auto=format&fit=crop&w=2000&q=85",
+                location: "草地上奔跑的短腿柯基犬 (Welsh Corgi)",
+                author: "Alvan Nee"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1529429617124-95b109e86bb8?auto=format&fit=crop&w=2000&q=85",
+                location: "雪白治癒系的薩摩耶犬 (Samoyed)",
+                author: "Pavan Trikutam"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1605568427561-40dd23c2acea?auto=format&fit=crop&w=2000&q=85",
+                location: "帥氣雪地哈士奇 (Siberian Husky)",
+                author: "Kateryna Babaieva"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=2000&q=85",
+                location: "呆萌可愛的法國鬥牛犬 (French Bulldog)",
+                author: "Karsten Winegeart"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1503256207526-0d5d80fa2f47?auto=format&fit=crop&w=2000&q=85",
+                location: "聰明敏捷的邊境牧羊犬 (Border Collie)",
+                author: "Rana Sawalha"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=2000&q=85",
+                location: "俏皮吐舌頭的小米格魯 (Beagle)",
+                author: "Charles Deluvio"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=2000&q=85",
+                location: "無辜大眼的萌萌幼犬 (Cute Puppy)",
+                author: "Jalil Nesbitt"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?auto=format&fit=crop&w=2000&q=85",
+                location: "蓬鬆軟萌的貴賓/比熊犬 (Poodle Mix)",
+                author: "Hana Morris"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?auto=format&fit=crop&w=2000&q=85",
+                location: "英姿颯爽的德國牧羊犬 (German Shepherd)",
+                author: "Sebastian Coman"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=2000&q=85",
+                location: "陽光下燦爛笑容的狗勾 (Happy Dog)",
+                author: "Mercheng"
+            }
+        ];
+
+        // Application State
+        let currentPhotoIndex = Math.floor(Math.random() * landscapePhotos.length);
+        let activeLayer = 1; // 1 or 2
+        let is24Hour = true;
+        let showSeconds = true;
+        let showDate = true;
+        let currentFont = 'font-orbitron';
+        let changeIntervalSec = 60; // default 1 minute (60s)
+        let elapsedSecondsInPeriod = 0;
+        let isPaused = false;
+        let clockTimer = null;
+        let intervalTimer = null;
+
+        // DOM Elements
+        const clockDisplay = document.getElementById('clock-display');
+        const dateDisplay = document.getElementById('date-display');
+        const dateText = document.getElementById('date-text');
+        const dayText = document.getElementById('day-text');
+        const bgLayer1 = document.getElementById('bg-layer-1');
+        const bgLayer2 = document.getElementById('bg-layer-2');
+        const dimOverlay = document.getElementById('dim-overlay');
+        const photoLocation = document.getElementById('photo-location');
+        const photoAuthor = document.getElementById('photo-author');
+        const progressBar = document.getElementById('progress-bar');
+        const pauseIcon = document.getElementById('pause-icon');
+        const timerText = document.getElementById('timer-text');
+
+        // Settings Controls
+        const settingsModal = document.getElementById('settings-modal');
+        const settingsCard = document.getElementById('settings-card');
+        const btnSettings = document.getElementById('btn-settings');
+        const btnCloseSettings = document.getElementById('btn-close-settings');
+        const btnSaveSettings = document.getElementById('btn-save-settings');
+        const toggle24h = document.getElementById('toggle-24h');
+        const toggleSeconds = document.getElementById('toggle-seconds');
+        const toggleDate = document.getElementById('toggle-date');
+        const selectFont = document.getElementById('select-font');
+        const sliderDarkness = document.getElementById('slider-darkness');
+        const darknessValue = document.getElementById('darkness-value');
+        const selectInterval = document.getElementById('select-interval');
+
+        // Update Time & Date
+        function updateClock() {
+            const now = new Date();
+
+            // Hours, Minutes, Seconds
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            let ampm = '';
+
+            if (!is24Hour) {
+                ampm = hours >= 12 ? ' PM' : ' AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // 0 becomes 12
+            }
+            const hoursStr = String(hours).padStart(2, '0');
+
+            // Construct Time String
+            let timeString = `${hoursStr}:${minutes}`;
+            if (showSeconds) {
+                timeString += `:${seconds}`;
+            }
+            if (!is24Hour) {
+                timeString += `<span class="text-3xl sm:text-5xl md:text-6xl ml-2 font-light">${ampm}</span>`;
+            }
+
+            clockDisplay.innerHTML = timeString;
+
+            // Date Formatting
+            if (showDate) {
+                const year = now.getFullYear();
+                const month = now.getMonth() + 1;
+                const date = now.getDate();
+                const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+                const dayName = days[now.getDay()];
+
+                dateText.textContent = `${year} 年 ${month} 月 ${date} 日`;
+                dayText.textContent = dayName;
+                dateDisplay.style.display = 'flex';
+            } else {
+                dateDisplay.style.display = 'none';
+            }
+        }
+
+        // Preload Image and Change Background Seamlessly
+        function loadPhoto(index) {
+            const photo = landscapePhotos[index];
+            const nextLayer = activeLayer === 1 ? bgLayer2 : bgLayer1;
+            const currentLayerEl = activeLayer === 1 ? bgLayer1 : bgLayer2;
+
+            // Preload image in memory first
+            const imgPreloader = new Image();
+            imgPreloader.src = photo.url;
+            imgPreloader.onload = () => {
+                // Set background of secondary layer
+                nextLayer.style.backgroundImage = `url('${photo.url}')`;
+
+                // Crossfade
+                nextLayer.style.opacity = '1';
+                currentLayerEl.style.opacity = '0';
+
+                // Swap active layer tracker
+                activeLayer = activeLayer === 1 ? 2 : 1;
+
+                // Update Photo Information UI
+                photoLocation.textContent = photo.location;
+                photoAuthor.textContent = `攝影師: ${photo.author}`;
+            };
+            imgPreloader.onerror = () => {
+                // Fallback: retry with next photo if loading fails
+                console.warn(`Failed to load photo at index ${index}, loading next...`);
+                nextPhoto();
+            };
+        }
+
+        // Next / Prev Photo Handlers
+        function nextPhoto() {
+            currentPhotoIndex = (currentPhotoIndex + 1) % landscapePhotos.length;
+            elapsedSecondsInPeriod = 0;
+            loadPhoto(currentPhotoIndex);
+        }
+
+        function prevPhoto() {
+            currentPhotoIndex = (currentPhotoIndex - 1 + landscapePhotos.length) % landscapePhotos.length;
+            elapsedSecondsInPeriod = 0;
+            loadPhoto(currentPhotoIndex);
+        }
+
+        // Progress Bar and Interval Timer
+        function startIntervalTimer() {
+            if (intervalTimer) clearInterval(intervalTimer);
+
+            intervalTimer = setInterval(() => {
+                if (!isPaused) {
+                    elapsedSecondsInPeriod++;
+                    
+                    // Update Progress Bar Percentage
+                    const progressPercent = (elapsedSecondsInPeriod / changeIntervalSec) * 100;
+                    progressBar.style.width = `${Math.min(progressPercent, 100)}%`;
+
+                    // Check if it's time to change image
+                    if (elapsedSecondsInPeriod >= changeIntervalSec) {
+                        nextPhoto();
+                    }
+                }
+            }, 1000);
+        }
+
+        // Toggle Pause/Play
+        function togglePause() {
+            isPaused = !isPaused;
+            if (isPaused) {
+                pauseIcon.className = "fa-solid fa-play text-xs";
+                timerText.textContent = "已暫停輪播";
+                document.getElementById('sync-dot').classList.remove('animate-pulse');
+                document.getElementById('sync-dot').classList.add('bg-amber-400');
+            } else {
+                pauseIcon.className = "fa-solid fa-pause text-xs";
+                timerText.textContent = `${changeIntervalSec / 60} 分鐘輪播中`;
+                document.getElementById('sync-dot').classList.add('animate-pulse');
+                document.getElementById('sync-dot').classList.remove('bg-amber-400');
+            }
+        }
+
+        // Open/Close Modal Functions
+        function openSettings() {
+            settingsModal.classList.remove('opacity-0', 'pointer-events-none');
+            settingsCard.classList.remove('scale-95');
+            settingsCard.classList.add('scale-100');
+        }
+
+        function closeSettings() {
+            settingsModal.classList.add('opacity-0', 'pointer-events-none');
+            settingsCard.classList.remove('scale-100');
+            settingsCard.classList.add('scale-95');
+        }
+
+        // Apply settings changes
+        function applySettings() {
+            is24Hour = toggle24h.checked;
+            showSeconds = toggleSeconds.checked;
+            showDate = toggleDate.checked;
+
+            // Font Style
+            const newFont = selectFont.value;
+            clockDisplay.classList.remove(currentFont);
+            clockDisplay.classList.add(newFont);
+            currentFont = newFont;
+
+            // Overlay Darkness
+            const darkness = sliderDarkness.value;
+            dimOverlay.style.backgroundColor = `rgba(0, 0, 0, ${darkness / 100})`;
+
+            // Interval
+            const newInterval = parseInt(selectInterval.value, 10);
+            if (newInterval !== changeIntervalSec) {
+                changeIntervalSec = newInterval;
+                elapsedSecondsInPeriod = 0;
+                timerText.textContent = `${changeIntervalSec / 60} 分鐘輪播中`;
+            }
+
+            updateClock();
+            closeSettings();
+        }
+
+        // Fullscreen Toggle Helper
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch((err) => {
+                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // Event Listeners Setup
+        function initEventListeners() {
+            // Controls
+            document.getElementById('btn-next-photo').addEventListener('click', nextPhoto);
+            document.getElementById('btn-prev-photo').addEventListener('click', prevPhoto);
+            document.getElementById('btn-pause-photo').addEventListener('click', togglePause);
+            document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
+
+            // Settings Modal
+            btnSettings.addEventListener('click', openSettings);
+            btnCloseSettings.addEventListener('click', closeSettings);
+            btnSaveSettings.addEventListener('click', applySettings);
+
+            // Darkness slider live display
+            sliderDarkness.addEventListener('input', (e) => {
+                darknessValue.textContent = `${e.target.value}%`;
+            });
+
+            // Close modal when clicking dark backdrop outside
+            settingsModal.addEventListener('click', (e) => {
+                if (e.target === settingsModal) closeSettings();
+            });
+
+            // Shortcut: Click on clock to toggle 12/24h format
+            clockDisplay.addEventListener('click', () => {
+                is24Hour = !is24Hour;
+                toggle24h.checked = is24Hour;
+                updateClock();
+            });
+
+            // Keyboard Shortcuts (Space: pause/play, Right Arrow: Next, Left Arrow: Prev)
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') {
+                    togglePause();
+                } else if (e.code === 'ArrowRight') {
+                    nextPhoto();
+                } else if (e.code === 'ArrowLeft') {
+                    prevPhoto();
+                } else if (e.code === 'KeyF') {
+                    toggleFullscreen();
+                }
+            });
+        }
+
+        // Application Entry Point
+        window.onload = function() {
+            // Load initial background photo
+            loadPhoto(currentPhotoIndex);
+
+            // Start clock timer
+            updateClock();
+            clockTimer = setInterval(updateClock, 1000);
+
+            // Start photo interval timer
+            startIntervalTimer();
+
+            // Bind listeners
+            initEventListeners();
+        };
+    </script>
+</body>
+</html>
